@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 cd /home/hesa/catty-reminders-app || exit 1
 
 SHA=$1
