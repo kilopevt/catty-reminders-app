@@ -11,20 +11,20 @@ jobs:
       # Шаг 1: Проверка, что секрет не пуст
       - name: Check SSH private key secret
         run: |
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          if [ -z "${{ secrets.SSH_LAB2 }}" ]; then
             echo "::error::SSH_PRIVATE_KEY secret is empty or not set"
             exit 1
           else
-            echo "SSH_PRIVATE_KEY exists, length: ${#SSH_PRIVATE_KEY} characters"
+            echo "SSH_PRIVATE_KEY exists, length: ${#SSH_LAB2} characters"
           fi
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_LAB2 }}
 
       # Шаг 2: Сохранить ключ во временный файл и проверить его формат
       - name: Save and validate private key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/temp_key
+          echo "${{ secrets.SSH_LAB2 }}" > ~/.ssh/temp_key
           chmod 600 ~/.ssh/temp_key
           # Проверяем, что ключ начинается с правильного заголовка
           head -1 ~/.ssh/temp_key | grep -q "BEGIN.*PRIVATE KEY" || { echo "Invalid key format"; exit 1; }
@@ -36,7 +36,7 @@ jobs:
         with:
           host: course.prafdin.ru
           username: hesa
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_LAB2 }}
           port: 3113
           script: echo "SSH connection successful"
 
@@ -46,7 +46,7 @@ jobs:
         with:
           host: course.prafdin.ru
           username: hesa
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_LAB2 }}
           port: 3113
           request_pty: true
           script: bash /home/hesa/catty-reminders-app/run_app.sh ${{ github.sha }}
