@@ -15,3 +15,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 3113
           script: bash /home/hesa/catty-reminders-app/run_app.sh ${{ github.sha }}
+       - name: Check SSH key
+         run: |
+            if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+               echo "SSH_PRIVATE_KEY is empty"
+               exit 1
+            else
+               echo "SSH_PRIVATE_KEY exists (first 20 chars): ${#{{ secrets.SSH_PRIVATE_KEY }}} chars"
+            fi
