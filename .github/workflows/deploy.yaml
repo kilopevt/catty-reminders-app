@@ -24,7 +24,7 @@ jobs:
       - name: Save and validate private key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SH_PRIVATE_KEY }}" > ~/.ssh/temp_key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/temp_key
           chmod 600 ~/.ssh/temp_key
           # Проверяем, что ключ начинается с правильного заголовка
           head -1 ~/.ssh/temp_key | grep -q "BEGIN.*PRIVATE KEY" || { echo "Invalid key format"; exit 1; }
