@@ -16,7 +16,7 @@ git reset --hard "$SHA"
 echo "DEPLOY_REF=$SHA" | sudo tee /etc/catty-app-env
 
 # 5. Перезапускаем само приложение
-sudo systemctl restart catty-app
+sudo systemctl restart catty
 
 # 6. Проверка
 sleep 3
