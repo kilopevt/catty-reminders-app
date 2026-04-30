@@ -1,4 +1,5 @@
 name: Deploy
+
 on:
   release:
     types: [published]
@@ -7,6 +8,39 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Шаг 1: Проверка, что секрет не пуст
+      - name: Check SSH private key secret
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "::error::SSH_PRIVATE_KEY secret is empty or not set"
+            exit 1
+          else
+            echo "SSH_PRIVATE_KEY exists, length: ${#SSH_PRIVATE_KEY} characters"
+          fi
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Шаг 2: Сохранить ключ во временный файл и проверить его формат
+      - name: Save and validate private key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SH_PRIVATE_KEY }}" > ~/.ssh/temp_key
+          chmod 600 ~/.ssh/temp_key
+          # Проверяем, что ключ начинается с правильного заголовка
+          head -1 ~/.ssh/temp_key | grep -q "BEGIN.*PRIVATE KEY" || { echo "Invalid key format"; exit 1; }
+          echo "Key format seems valid"
+
+      # Шаг 3: Тестовое подключение по SSH (без выполнения скрипта)
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: course.prafdin.ru
+          username: hesa
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 3113
+          script: echo "SSH connection successful"
+
+      # Шаг 4: Основной деплой (если предыдущие шаги успешны)
       - name: Deploy via script
         uses: appleboy/ssh-action@v1.0.3
         with:
