@@ -2,41 +2,29 @@ name: CI
 
 on:
   push:
-    branches:
-      - lab2
-      - lab2_autotests*
+    branches: [ lab3 ]
   pull_request:
-    branches:
-      - lab2
-      - lab2_autotests*
+    branches: [ lab3 ]
 
 jobs:
-  pipeline:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install uvicorn pytest-playwright
-          playwright install --with-deps chromium
-
-      - name: Start app
-        run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
-          sleep 5
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
 
       - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        # Генерируем XML отчет для бота
         run: pytest --junitxml=test_result.xml || true
 
       - name: Upload test results
@@ -45,3 +33,25 @@ jobs:
         with:
           name: test_result
           path: test_result.xml
+
+      # -- Новые шаги для Docker --
+      - name: Check Dockerfile with hadolint
+        run: |
+          docker run --rm -i hadolint/hadolint < Dockerfile || true
+        continue-on-error: true   # Не останавливаем пайплайн, только предупреждение
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
