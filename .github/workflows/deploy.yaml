@@ -8,7 +8,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Image Name
+        id: prep
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+
+      - name: Remote Docker Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: course.prafdin.ru
@@ -17,30 +26,23 @@ jobs:
           port: 3113
           request_pty: true
           script: |
-            set -e
+            IMAGE="ghcr.io/${{ steps.prep.outputs.repo_lower }}:latest"
+            CONTAINER_NAME="catty-container"
 
-            # Остановить и удалить старый контейнер (если есть)
-            docker stop catty-app || true
-            docker rm catty-app || true
+            echo "Logging in to GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Авторизация в GitHub Container Registry (используем PAT)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u kilopevt --password-stdin
+            echo "Pulling image: $IMAGE"
+            docker pull $IMAGE
 
-            # Скачать последний образ
-            docker pull ghcr.io/kilopevt/catty-reminders-app:latest
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
 
-            # Запустить новый контейнер
-            docker run -d --name catty-app \
-              --restart unless-stopped \
+            docker run -d \
+              --name $CONTAINER_NAME \
               -p 8181:8181 \
-              -e DEPLOY_REF="${{ github.sha }}" \
-              ghcr.io/kilopevt/catty-reminders-app:latest
+              --restart unless-stopped \
+              -e DEPLOY_REF=${{ github.sha }} \
+              $IMAGE
 
-            # Проверка, что контейнер запустился
-            sleep 3
-            if docker ps | grep -q catty-app; then
-              echo "SUCCESS: Container deployed"
-            else
-              echo "ERROR: Container failed to start"
-              exit 1
-            fi
+            docker image prune -f
