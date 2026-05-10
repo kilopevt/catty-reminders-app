@@ -38,4 +38,3 @@ networks:
 
 volumes:
   db_data:
-    name: catty_db_data
