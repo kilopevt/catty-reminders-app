@@ -6,10 +6,10 @@ services:
     container_name: ${DB_CONTAINER_NAME:-catty-db}
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-mypass}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-catty_reminders}
+      MARIADB_USER: ${MARIADB_USER:-hesa}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-mypass}
     ports:
       - "${HOST_DB_PORT:-3306}:${CONTAINER_DB_PORT:-3306}"
     volumes:
@@ -18,15 +18,15 @@ services:
       - catty-network
 
   catty-app:
-    image: ${IMAGE}
+    image: ${IMAGE:-ghcr.io/kilopevt/catty-reminders-app:latest}
     container_name: ${APP_CONTAINER_NAME:-catty-app}
     restart: always
     environment:
-      DEPLOY_REF: ${DEPLOY_REF}
+      DEPLOY_REF: ${DEPLOY_REF:-unknown}
     ports:
       - "${HOST_APP_PORT:-8181}:${CONTAINER_APP_PORT:-8181}"
     volumes:
-      - ./config.json:/catty-reminders-app/config.json:ro   # монтируем конфиг
+      - ./config.json:/catty-reminders-app/config.json:ro
     depends_on:
       - db
     networks:
@@ -38,3 +38,4 @@ networks:
 
 volumes:
   db_data:
+    name: catty-reminders_db_data
