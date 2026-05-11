@@ -1,5 +1,10 @@
 FROM python:3.12-slim
 
+# Принимаем аргумент DEPLOY_REF на этапе сборки
+ARG DEPLOY_REF
+# Сохраняем его как переменную окружения внутри образа
+ENV DEPLOY_REF=$DEPLOY_REF
+
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
