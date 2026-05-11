@@ -15,9 +15,9 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: course.prafdin.ru
-          username: kilopevt            # твой логин
-          key: ${{ secrets.SSH_LAB2 }}  # название секрета
-          port: 3113                    # твой SSH-порт
+          username: hesa
+          key: ${{ secrets.SSH_LAB2 }}
+          port: 3113
           script: |
             IMAGE="ghcr.io/${{ steps.prep.outputs.repo_lower }}:latest"
             CONTAINER_NAME="catty-container"
