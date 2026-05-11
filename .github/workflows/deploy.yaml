@@ -1,5 +1,4 @@
 name: Deploy
-
 on:
   release:
     types: [published]
@@ -8,27 +7,34 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Prepare image name
+      - uses: actions/checkout@v4
+      - name: Prepare Image Name
         id: prep
-        run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
-      - name: Deploy via SSH
+        run: echo "repo_lower=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+      - name: Remote Docker Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: course.prafdin.ru
-          username: hesa
-          key: ${{ secrets.SSH_LAB2 }}
-          port: 3113
-          request_pty: true
+          username: kilopevt            # твой логин
+          key: ${{ secrets.SSH_LAB2 }}  # название секрета
+          port: 3113                    # твой SSH-порт
           script: |
-            set -e
-            cd /home/hesa/catty-reminders-app || exit 1
-            IMAGE="ghcr.io/${{ steps.prep.outputs.repo_lower }}:${{ github.sha }}"
+            IMAGE="ghcr.io/${{ steps.prep.outputs.repo_lower }}:latest"
             CONTAINER_NAME="catty-container"
+
+            echo "Logging in to GHCR..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "Pulling image: $IMAGE"
             docker pull $IMAGE
+
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
-            docker run -d --name $CONTAINER_NAME -p 8181:8181 --restart unless-stopped $IMAGE
+
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -p 8181:8181 \
+              --restart unless-stopped \
+              $IMAGE
+
             docker image prune -f
