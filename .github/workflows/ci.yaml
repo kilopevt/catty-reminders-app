@@ -16,10 +16,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest uvicorn
-      - name: Run tests (no DB required)
+        run: pip install -r requirements.txt pytest uvicorn
+      - name: Run tests
         run: pytest --junitxml=test_result.xml || true
       - name: Upload test results
         if: always()
@@ -37,7 +35,7 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare repo name lowercase
+      - name: Prepare repo lowercase
         id: prep
         run: |
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
@@ -48,7 +46,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push image
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
