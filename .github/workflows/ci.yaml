@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Hadolint
-        run: docker run --rm -i hadolint/hadolint < Dockerfile
+        run: docker run --rm -i hadolint/hadolint hadolint - < Dockerfile
 
   pipeline:
     needs: docker-lint
@@ -31,21 +31,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt uvicorn pytest-playwright
           playwright install --with-deps chromium
+
       - name: Patch config for CI
         run: sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
+
       - name: Start app
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
           sleep 10
+
       - name: Run tests
         env:
           PYTHONPATH: "${{ github.workspace }}"
         run: pytest --junitxml=test_result.xml
+
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,8 +71,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -76,3 +81,5 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/catty-reminders-app:latest
             ghcr.io/${{ github.repository_owner }}/catty-reminders-app:${{ github.sha }}
+          build-args: |
+            DEPLOY_REF=${{ github.sha }}

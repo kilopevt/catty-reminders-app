@@ -4,10 +4,10 @@ services:
     container_name: catty-db
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
     ports:
       - "${HOST_DB_PORT}:3306"
     volumes:
@@ -23,7 +23,6 @@ services:
       - "${HOST_APP_PORT}:8181"
     volumes:
       - ./config.json:/catty-reminders-app/config.json:ro
-      - app_data:/catty-reminders-app
     depends_on:
       - db
     networks:
@@ -35,4 +34,3 @@ networks:
 
 volumes:
   db_data:
-  app_data:
