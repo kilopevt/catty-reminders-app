@@ -1,32 +1,57 @@
 name: CI
+
 on:
   push:
-    branches: [ lab3* ]
+    branches: [ lab4* ]
   pull_request:
-    branches: [ lab3* ]
+    branches: [ lab4* ]
 
 jobs:
-  tests:
+  docker-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.12
+      - name: Run hadolint
+        run: docker run --rm -i hadolint/hadolint < Dockerfile
+
+  tests:
+    needs: docker-lint
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: mypass
+          MARIADB_DATABASE: catty_reminders
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install deps
+      - name: Install dependencies
         run: |
-          pip install -r requirements.txt pytest-playwright
+          pip install -r requirements.txt uvicorn pytest-playwright
           playwright install --with-deps chromium
-      - name: Start App
+      - name: Patch config for CI (use 127.0.0.1 instead of db)
+        run: |
+          sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
+      - name: Start app
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8181 &
-          sleep 5
+          sleep 10
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest --junitxml=test_result.xml
-      - name: Upload results
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -34,17 +59,14 @@ jobs:
           path: test_result.xml
 
   build-and-push:
-    needs: tests
     runs-on: ubuntu-latest
+    needs: tests
     if: github.event_name == 'push'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare Image Name
-        id: prep
-        run: echo "repo_lower=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -57,7 +79,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ steps.prep.outputs.repo_lower }}:latest
-            ghcr.io/${{ steps.prep.outputs.repo_lower }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/catty-reminders-app:latest
+            ghcr.io/${{ github.repository_owner }}/catty-reminders-app:${{ github.sha }}
           build-args: |
             DEPLOY_REF=${{ github.sha }}
