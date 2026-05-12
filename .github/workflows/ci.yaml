@@ -23,7 +23,8 @@ jobs:
         env:
           MARIADB_ROOT_PASSWORD: mypass
           MARIADB_DATABASE: catty_reminders
-        ports: [ 3306:3306 ]
+        ports:
+          - "3306:3306"
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +39,6 @@ jobs:
           pip install -r requirements.txt uvicorn pytest-playwright
           playwright install --with-deps chromium
 
-      # Для CI временно подменяем хост БД на 127.0.0.1
       - name: Patch config for CI
         run: sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
 
