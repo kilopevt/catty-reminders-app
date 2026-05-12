@@ -1,4 +1,5 @@
 name: Deploy
+
 on:
   release:
     types: [published]
@@ -16,21 +17,20 @@ jobs:
           port: 3113
           key: ${{ secrets.SSH_LAB2 }}
           script: |
-            set -e
-            cd /home/hesa/catty-reminders-app
-            git fetch origin
-            git checkout lab4
-            git pull origin lab4
+            bash -c '
+              set -e
+              cd /home/hesa/catty-reminders-app
+              OWNER=$(echo "${{ github.repository_owner }}" | tr "[:upper:]" "[:lower:]")
+              export DEPLOY_REF=${{ github.sha }}
+              export IMAGE=ghcr.io/$OWNER/catty-reminders-app:${{ github.sha }} 
+              export APP_CONTAINER_NAME=catty-app
+              export MARIADB_ROOT_PASSWORD=mypass
+              export MARIADB_USER=hesa
+              export MARIADB_PASSWORD=mypass
+              export MARIADB_DATABASE=catty_reminders
+              export HOST_DB_PORT=3306
+              export HOST_APP_PORT=8181
 
-            export DEPLOY_REF="${{ github.sha }}"
-            export IMAGE="ghcr.io/kilopevt/catty-reminders-app:${{ github.sha }}"
-            export APP_CONTAINER_NAME="catty-app"
-            export MARIADB_ROOT_PASSWORD="mypass"
-            export MARIADB_USER="hesa"
-            export MARIADB_PASSWORD="mypass"
-            export MARIADB_DATABASE="catty_reminders"
-            export HOST_DB_PORT=3306
-            export HOST_APP_PORT=8181
-
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u kilopevt --password-stdin
-            docker compose up -d --pull always --remove-orphans --force-recreate
+              echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+              docker compose up -d --pull always --remove-orphans --force-recreate 
+            '
