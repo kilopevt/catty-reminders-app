@@ -20,9 +20,7 @@ jobs:
               set -e
               cd /home/hesa/catty-reminders-app
               OWNER=$(echo "${{ github.repository_owner }}" | tr "[:upper:]" "[:lower:]")
-
-              export IMAGE=ghcr.io/$OWNER/catty-reminders-app:${{ github.sha }}
-
+              export IMAGE=ghcr.io/$OWNER/catty-reminders-app:latest
               export APP_CONTAINER_NAME=catty-app
               export MARIADB_ROOT_PASSWORD=mypass
               export MARIADB_USER=hesa
