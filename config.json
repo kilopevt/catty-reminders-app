@@ -1,5 +1,5 @@
 {
-  "db_path": "/data/reminder_db.json",
+  "db_path": "",
   "secret_key": "Cats are awesome!",
   "users": {
     "heisenberg": "P@ssw0rd",
