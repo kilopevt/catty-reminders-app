@@ -38,6 +38,7 @@ jobs:
           pip install -r requirements.txt uvicorn pytest-playwright
           playwright install --with-deps chromium
 
+      # Для CI временно подменяем хост БД на 127.0.0.1
       - name: Patch config for CI
         run: sed -i 's/"host": "db"/"host": "127.0.0.1"/g' config.json
 
@@ -71,15 +72,15 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: "${{ github.actor }}"
-          password: "${{ secrets.GITHUB_TOKEN }}"
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          build-args: |
+            DEPLOY_REF=${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/catty-reminders-app:latest
             ghcr.io/${{ github.repository_owner }}/catty-reminders-app:${{ github.sha }}
-          build-args: |
-            DEPLOY_REF=${{ github.sha }}
