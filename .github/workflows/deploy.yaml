@@ -33,5 +33,5 @@ jobs:
               export CONTAINER_APP_PORT=8181
 
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-              docker compose up -d --pull always --remove-orphans --force-recreate
+              docker compose up -d --pull always --remove-orphans
             '
