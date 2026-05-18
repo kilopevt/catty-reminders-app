@@ -19,9 +19,9 @@ jobs:
             cd /home/hesa/catty-reminders-app
             export IMAGE=ghcr.io/kilopevt/catty-reminders-app:${{ github.sha }}
             export APP_CONTAINER_NAME=catty-app
-            export MARIADB_ROOT_PASSWORD=mypass
+            export MARIADB_ROOT_PASSWORD=${{ secrets.MARIADB_ROOT_PASSWORD }}
             export MARIADB_USER=hesa
-            export MARIADB_PASSWORD=mypass
+            export MARIADB_PASSWORD=${{ secrets.MARIADB_PASSWORD }}
             export MARIADB_DATABASE=catty_reminders
             export HOST_DB_PORT=3306
             export CONTAINER_DB_PORT=3306
